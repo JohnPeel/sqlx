@@ -118,6 +118,15 @@ pub enum PgType {
     Money,
     MoneyArray,
 
+    Uint1,
+    Uint1Array,
+    Uint2,
+    Uint2Array,
+    Uint4,
+    Uint4Array,
+    Uint8,
+    Uint8Array,
+
     // https://www.postgresql.org/docs/9.3/datatype-pseudo.html
     Void,
 
@@ -204,6 +213,19 @@ impl PgTypeInfo {
             Some("mac_address")
         } else if [PgTypeInfo::NUMERIC, PgTypeInfo::NUMERIC_ARRAY].contains(self) {
             Some("bigdecimal")
+        } else if [
+            PgTypeInfo::UINT1,
+            PgTypeInfo::UINT1_ARRAY,
+            PgTypeInfo::UINT2,
+            PgTypeInfo::UINT2_ARRAY,
+            PgTypeInfo::UINT4,
+            PgTypeInfo::UINT4_ARRAY,
+            PgTypeInfo::UINT8,
+            PgTypeInfo::UINT8_ARRAY,
+        ]
+        .contains(self)
+        {
+            Some("pguint")
         } else {
             None
         }
@@ -437,6 +459,14 @@ impl PgType {
             PgType::Int8RangeArray => Oid(3927),
             PgType::Jsonpath => Oid(4072),
             PgType::JsonpathArray => Oid(4073),
+
+            PgType::Uint1 | PgType::Uint1Array
+                | PgType::Uint2 | PgType::Uint2Array
+                | PgType::Uint4 | PgType::Uint4Array 
+                | PgType::Uint8 | PgType::Uint8Array => {
+                return None;
+            }
+
             PgType::Custom(ty) => ty.oid,
 
             PgType::DeclareWithOid(oid) => *oid,
@@ -540,6 +570,16 @@ impl PgType {
             PgType::Money => "MONEY",
             PgType::MoneyArray => "MONEY[]",
             PgType::Void => "VOID",
+
+            PgType::Uint1 => "UINT1",
+            PgType::Uint1Array => "UINT1[]",
+            PgType::Uint2 => "UINT2",
+            PgType::Uint2Array => "UINT2[]",
+            PgType::Uint4 => "UINT4",
+            PgType::Uint4Array => "UINT4[]",
+            PgType::Uint8 => "UINT8",
+            PgType::Uint8Array => "UINT8[]",
+
             PgType::Custom(ty) => &*ty.name,
             PgType::DeclareWithOid(_) => "?",
             PgType::DeclareWithName(name) => name,
@@ -640,6 +680,16 @@ impl PgType {
             PgType::Money => "money",
             PgType::MoneyArray => "_money",
             PgType::Void => "void",
+
+            PgType::Uint1 => "uint1",
+            PgType::Uint1Array => "_uint1",
+            PgType::Uint2 => "uint2",
+            PgType::Uint2Array => "_uint2",
+            PgType::Uint4 => "uint4",
+            PgType::Uint4Array => "_uint4",
+            PgType::Uint8 => "uint8",
+            PgType::Uint8Array => "_uint8",
+
             PgType::Custom(ty) => &*ty.name,
             PgType::DeclareWithOid(_) => "?",
             PgType::DeclareWithName(name) => name,
@@ -739,8 +789,16 @@ impl PgType {
             PgType::JsonpathArray => &PgTypeKind::Array(PgTypeInfo(PgType::Jsonpath)),
             PgType::Money => &PgTypeKind::Simple,
             PgType::MoneyArray => &PgTypeKind::Array(PgTypeInfo(PgType::Money)),
-
             PgType::Void => &PgTypeKind::Pseudo,
+
+            PgType::Uint1 => &PgTypeKind::Simple,
+            PgType::Uint1Array => &PgTypeKind::Array(PgTypeInfo(PgType::Uint1)),
+            PgType::Uint2 => &PgTypeKind::Simple,
+            PgType::Uint2Array => &PgTypeKind::Array(PgTypeInfo(PgType::Uint2)),
+            PgType::Uint4 => &PgTypeKind::Simple,
+            PgType::Uint4Array => &PgTypeKind::Array(PgTypeInfo(PgType::Uint4)),
+            PgType::Uint8 => &PgTypeKind::Simple,
+            PgType::Uint8Array => &PgTypeKind::Array(PgTypeInfo(PgType::Uint8)),
 
             PgType::Custom(ty) => &ty.kind,
 
@@ -854,6 +912,16 @@ impl PgType {
             PgType::Unknown => None,
             // There is no `VoidArray`
             PgType::Void => None,
+
+            PgType::Uint1 => None,
+            PgType::Uint1Array => Some(Cow::Owned(PgTypeInfo(PgType::Uint1))),
+            PgType::Uint2 => None,
+            PgType::Uint2Array => Some(Cow::Owned(PgTypeInfo(PgType::Uint2))),
+            PgType::Uint4 => None,
+            PgType::Uint4Array => Some(Cow::Owned(PgTypeInfo(PgType::Uint4))),
+            PgType::Uint8 => None,
+            PgType::Uint8Array => Some(Cow::Owned(PgTypeInfo(PgType::Uint8))),
+
             PgType::Custom(ty) => match &ty.kind {
                 PgTypeKind::Simple => None,
                 PgTypeKind::Pseudo => None,
@@ -974,6 +1042,9 @@ impl PgTypeInfo {
     pub(crate) const CHAR: Self = Self(PgType::Char);
     pub(crate) const CHAR_ARRAY: Self = Self(PgType::CharArray);
 
+    pub(crate) const UINT1: Self = Self(PgType::Uint1);
+    pub(crate) const UINT1_ARRAY: Self = Self(PgType::Uint1Array);
+
     // internal type for type ids
     pub(crate) const OID: Self = Self(PgType::Oid);
     pub(crate) const OID_ARRAY: Self = Self(PgType::OidArray);
@@ -982,13 +1053,22 @@ impl PgTypeInfo {
     pub(crate) const INT2: Self = Self(PgType::Int2);
     pub(crate) const INT2_ARRAY: Self = Self(PgType::Int2Array);
 
+    pub(crate) const UINT2: Self = Self(PgType::Uint2);
+    pub(crate) const UINT2_ARRAY: Self = Self(PgType::Uint2Array);
+
     // typical choice for integer; -2147483648 to +2147483647
     pub(crate) const INT4: Self = Self(PgType::Int4);
     pub(crate) const INT4_ARRAY: Self = Self(PgType::Int4Array);
 
+    pub(crate) const UINT4: Self = Self(PgType::Uint4);
+    pub(crate) const UINT4_ARRAY: Self = Self(PgType::Uint4Array);
+
     // large-range integer; -9223372036854775808 to +9223372036854775807
     pub(crate) const INT8: Self = Self(PgType::Int8);
     pub(crate) const INT8_ARRAY: Self = Self(PgType::Int8Array);
+
+    pub(crate) const UINT8: Self = Self(PgType::Uint8);
+    pub(crate) const UINT8_ARRAY: Self = Self(PgType::Uint8Array);
 
     // variable-precision, inexact, 6 decimal digits precision
     pub(crate) const FLOAT4: Self = Self(PgType::Float4);

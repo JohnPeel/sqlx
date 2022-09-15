@@ -3,6 +3,7 @@ use bytes::Buf;
 use crate::decode::Decode;
 use crate::encode::Encode;
 use crate::error::{mismatched_types, BoxDynError};
+use crate::ext::ustr::UStr;
 use crate::postgres::type_info::{PgType, PgTypeKind};
 use crate::postgres::types::Oid;
 use crate::postgres::{PgArgumentBuffer, PgTypeInfo, PgValueFormat, PgValueRef, Postgres};
@@ -41,13 +42,19 @@ impl<'a> PgRecordEncoder<'a> {
     {
         let ty = value.produces().unwrap_or_else(T::type_info);
 
-        if let PgType::DeclareWithName(name) = ty.0 {
+        match ty.0 {
             // push a hole for this type ID
             // to be filled in on query execution
-            self.buf.patch_type_by_name(&name);
-        } else {
+            PgType::DeclareWithName(name) => self.buf.patch_type_by_name(&name),
+
+            PgType::Uint1 | PgType::Uint1Array
+                | PgType::Uint2 | PgType::Uint2Array
+                | PgType::Uint4 | PgType::Uint4Array
+                | PgType::Uint8 | PgType::Uint8Array
+                => self.buf.patch_type_by_name(&UStr::new(ty.0.name())),
+
             // write type id
-            self.buf.extend(&ty.0.oid().0.to_be_bytes());
+            _ => self.buf.extend(&ty.0.oid().0.to_be_bytes()),
         }
 
         self.buf.encode(value);

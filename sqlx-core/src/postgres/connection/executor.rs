@@ -36,10 +36,16 @@ async fn prepare(
     let mut param_types = Vec::with_capacity(parameters.len());
 
     for ty in parameters {
-        param_types.push(if let PgType::DeclareWithName(name) = &ty.0 {
-            conn.fetch_type_id_by_name(name).await?
-        } else {
-            ty.0.oid()
+        param_types.push(match &ty.0 {
+            PgType::DeclareWithName(name) => conn.fetch_type_id_by_name(name).await?,
+
+            PgType::Uint1 | PgType::Uint1Array
+                | PgType::Uint2 | PgType::Uint2Array
+                | PgType::Uint4 | PgType::Uint4Array
+                | PgType::Uint8 | PgType::Uint8Array
+                => conn.fetch_type_id_by_name(ty.0.name()).await?,
+
+            _ => ty.0.oid(),
         });
     }
 

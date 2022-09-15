@@ -4,6 +4,7 @@ use std::borrow::Cow;
 use crate::decode::Decode;
 use crate::encode::{Encode, IsNull};
 use crate::error::BoxDynError;
+use crate::ext::ustr::UStr;
 use crate::postgres::type_info::PgType;
 use crate::postgres::types::Oid;
 use crate::postgres::{PgArgumentBuffer, PgTypeInfo, PgValueFormat, PgValueRef, Postgres};
@@ -106,6 +107,12 @@ where
         // element type
         match type_info.0 {
             PgType::DeclareWithName(name) => buf.patch_type_by_name(&name),
+
+            PgType::Uint1 | PgType::Uint1Array
+                | PgType::Uint2 | PgType::Uint2Array
+                | PgType::Uint4 | PgType::Uint4Array
+                | PgType::Uint8 | PgType::Uint8Array
+                => buf.patch_type_by_name(&UStr::new(type_info.0.name())),
 
             ty => {
                 buf.extend(&ty.oid().0.to_be_bytes());

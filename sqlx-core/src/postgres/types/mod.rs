@@ -183,6 +183,7 @@ mod range;
 mod record;
 mod str;
 mod tuple;
+mod uint;
 mod void;
 
 #[cfg(any(feature = "chrono", feature = "time"))]

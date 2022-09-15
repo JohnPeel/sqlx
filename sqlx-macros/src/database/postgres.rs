@@ -9,6 +9,14 @@ impl_database_ext! {
         i16,
         i32,
         i64,
+        #[cfg(feature = "pguint")]
+        u8,
+        #[cfg(feature = "pguint")]
+        u16,
+        #[cfg(feature = "pguint")]
+        u32,
+        #[cfg(feature = "pguint")]
+        u64,
         f32,
         f64,
         Vec<u8> | &[u8],
@@ -83,6 +91,12 @@ impl_database_ext! {
         Vec<i16> | &[i16],
         Vec<i32> | &[i32],
         Vec<i64> | &[i64],
+        #[cfg(feature = "pguint")]
+        Vec<u16> | &[u16],
+        #[cfg(feature = "pguint")]
+        Vec<u32> | &[u32],
+        #[cfg(feature = "pguint")]
+        Vec<u64> | &[u64],
         Vec<f32> | &[f32],
         Vec<f64> | &[f64],
         Vec<sqlx::postgres::types::Oid> | &[sqlx::postgres::types::Oid],
